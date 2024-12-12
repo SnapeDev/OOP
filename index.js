@@ -1,4 +1,3 @@
-// JavaScript Game Logic
 class Room {
   constructor(name, description) {
     this._name = name;
@@ -99,6 +98,8 @@ class Character {
 }
 
 let collectedCarrots = 0;
+let currentRoom = null;
+let isGameOver = false;
 
 // Rooms
 const Garden = new Room(
@@ -129,7 +130,6 @@ const Basement = new Room(
   "basement",
   "a dark and damp room with a gaping hole in the middle of the floor"
 );
-
 const LaundryRoom = new Room(
   "laundry room",
   "a small room with a washer and dryer"
@@ -168,7 +168,7 @@ Basement.item = GoldenCarrot;
 // Rabbit
 const Rabbit = new Character(
   "Rabbit",
-  "a small fluffy rabbit hiding behind a bush",
+  "a small white rabbit hiding behind a bush",
   "Thank you for the carrots!"
 );
 Garden.character = Rabbit;
@@ -197,7 +197,77 @@ const displayRoomInfo = (room) => {
   document.getElementById("user-text").focus();
 };
 
+const handleKeydown = (event) => {
+  if (isGameOver) return;
+
+  if (event.key === "Enter") {
+    const command = document.getElementById("user-text").value.toLowerCase();
+
+    if (command.startsWith("move ")) {
+      const direction = command.split(" ")[1];
+      currentRoom = currentRoom.move(direction);
+      document.getElementById("user-text").value = "";
+      displayRoomInfo(currentRoom);
+    } else if (command === "collect carrot") {
+      if (collectedCarrots >= 3) {
+        alert("Your bag is full, you have already collected enough carrots!");
+        return;
+      }
+      if (currentRoom.item && currentRoom.item.name === "carrot") {
+        collectedCarrots++;
+        const carrotJingle = document.getElementById("carrot-jingle");
+        carrotJingle.play();
+        currentRoom.item = null;
+      } else if (
+        currentRoom.item &&
+        currentRoom.item.name === "golden carrot"
+      ) {
+        const success = Math.random() < 0.5; // 50/50 chance
+        if (success) {
+          collectedCarrots = 3; // Successfully collect the golden carrot
+          const carrotJingle = document.getElementById("carrot-jingle");
+          carrotJingle.play();
+          carrotJingle.onended = function () {
+            alert(
+              "You successfully grabbed the golden carrot! Carrots collected: 3/3"
+            );
+          };
+          currentRoom.item = null;
+        } else {
+          triggerGameOver();
+          return;
+        }
+      } else {
+        alert("There's no carrot here to take.");
+      }
+      displayRoomInfo(currentRoom);
+    } else if (command === "feed rabbit") {
+      if (currentRoom === Garden && collectedCarrots >= 3) {
+        alert("You gave the rabbit the carrots. It comes out of hiding!");
+        document.getElementById("text-area").innerHTML =
+          `<p>${Rabbit.describe()}</p>` + `<p>${Rabbit.converse()}</p>`;
+        document.getElementById("game-area").classList.add("hidden");
+        document
+          .getElementById("congratulations-screen")
+          .classList.remove("hidden");
+      } else if (currentRoom === Garden) {
+        alert(
+          "The rabbit is still hiding. You need to collect 3 carrots first."
+        );
+      } else {
+        alert("You can only feed the rabbit in the garden.");
+      }
+      displayRoomInfo(currentRoom);
+    } else {
+      alert(
+        "Invalid command! Try commands like 'move <direction>', 'collect carrot', or 'feed rabbit'."
+      );
+    }
+  }
+};
+
 const triggerGameOver = () => {
+  isGameOver = true;
   document.getElementById("game-area").classList.add("hidden");
   document.getElementById("game-over").classList.remove("hidden");
 };
@@ -205,92 +275,27 @@ const triggerGameOver = () => {
 const restartGame = () => {
   collectedCarrots = 0; // Reset carrot count
   currentRoom = Garden; // Reset to starting room
+  isGameOver = false; // Reset game-over state
   document.getElementById("game-area").classList.remove("hidden");
   document.getElementById("game-over").classList.add("hidden");
   displayRoomInfo(currentRoom); // Refresh the game display
+
+  // Remove old keydown listener and reattach a new one
+  document.removeEventListener("keydown", handleKeydown);
+  document.addEventListener("keydown", handleKeydown);
 };
 
 const startGame = () => {
-  let currentRoom = Garden;
+  currentRoom = Garden; // Set initial room
+  displayRoomInfo(currentRoom); // Show room info
 
-  displayRoomInfo(currentRoom);
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      const command = document.getElementById("user-text").value.toLowerCase();
-
-      if (command.startsWith("move ")) {
-        const direction = command.split(" ")[1];
-        currentRoom = currentRoom.move(direction);
-        document.getElementById("user-text").value = "";
-        displayRoomInfo(currentRoom);
-      } else if (command === "collect carrot") {
-        if (collectedCarrots >= 3) {
-          alert("Your bag is full, you have already collected enough carrots!");
-          return;
-        }
-        if (currentRoom.item && currentRoom.item.name === "carrot") {
-          collectedCarrots++;
-          const carrotJingle = document.getElementById("carrot-jingle");
-          carrotJingle.play();
-          currentRoom.item = null;
-        } else if (
-          currentRoom.item &&
-          currentRoom.item.name === "golden carrot"
-        ) {
-          const success = Math.random() < 0.5; // 50/50 chance
-          if (success) {
-            collectedCarrots = 3; // Successfully collect the golden carrot
-            const carrotJingle = document.getElementById("carrot-jingle");
-
-            // Play the jingle sound
-            carrotJingle.play();
-
-            // Wait for the jingle to finish before showing the alert
-            carrotJingle.onended = function () {
-              alert(
-                "You successfully grabbed the golden carrot! Carrots collected: 3/3"
-              );
-            };
-            currentRoom.item = null; // Remove the golden carrot
-          } else {
-            triggerGameOver(); // Trigger game-over state
-            return; // Stop the game logic here
-          }
-        } else {
-          alert("There's no carrot here to take.");
-        }
-        displayRoomInfo(currentRoom);
-      } else if (command === "find rabbit") {
-        if (currentRoom === Garden && collectedCarrots >= 3) {
-          alert("You gave the rabbit the carrots. It comes out of hiding!");
-          document.getElementById("text-area").innerHTML =
-            `<p>${Rabbit.describe()}</p>` +
-            `<p>${Rabbit.converse()}</p>` +
-            document.getElementById("game-area").classList.add("hidden");
-          document
-            .getElementById("congratulations-screen")
-            .classList.remove("hidden");
-        } else if (currentRoom === Garden) {
-          alert(
-            "The rabbit is still hiding. You need to collect 3 carrots first."
-          );
-        } else {
-          alert("You can only find the rabbit in the garden.");
-        }
-        displayRoomInfo(currentRoom);
-      } else {
-        alert(
-          "Invalid command! Try commands like 'move <direction>', 'collect carrot', or 'find rabbit'."
-        );
-      }
-    }
-  });
+  // Attach the keydown event listener
+  document.addEventListener("keydown", handleKeydown);
 };
 
+// Event listener for the start button
 document.getElementById("start-button").addEventListener("click", () => {
   document.getElementById("intro-page").classList.add("hidden");
   document.getElementById("game-area").classList.remove("hidden");
-
   startGame();
 });
