@@ -1,4 +1,11 @@
 class Room {
+  /**
+   * Constructs a new Room.
+   * @param {string} name The name of the room.
+   * @param {string} description A description of the room.
+   * @author: Jack
+   */
+  /******  7941c861-17e5-4ed3-9f17-0344777d7381  *******/
   constructor(name, description) {
     this._name = name;
     this._description = description;
@@ -6,7 +13,11 @@ class Room {
     this._item = null;
     this._character = null;
   }
-
+  /**
+   * Returns the name of the room.
+   * @return {string} The name of the room.
+   */
+  /******  957e6c4f-69b4-4aa5-b5b8-8219ddde6a6b  *******/
   get name() {
     return this._name;
   }
@@ -23,10 +34,25 @@ class Room {
     this._name = value;
   }
 
+  /**
+   * Provides a description of the current room.
+   *
+   * @return {string} A sentence describing the room's name and its features.
+   */
+  /******  eadcd063-166e-494d-8ec7-c070fe4f4911  *******/
   describe() {
     return `Looking around the ${this._name}, you can see ${this._description}`;
   }
 
+  /**
+   * Returns a string describing the rooms linked to the current room.
+   *
+   * Iterates through the linked rooms and constructs a sentence indicating
+   * the directions and names of the rooms connected to the current room.
+   *
+   * @return {string} A string listing the linked rooms and their directions.
+   */
+  /******  248ad964-c402-4918-9b3c-f8ae03a716bc  *******/
   getDetails() {
     const entries = Object.entries(this._linkedRooms);
     let details = [];
@@ -36,6 +62,13 @@ class Room {
     return details.join(". ");
   }
 
+  /**
+   * Move in the given direction.
+   * @param {string} direction A string (e.g. "north", "south", etc.)
+   * @return {Room} The room in the given direction, or the current room
+   *                if the direction is invalid.
+   */
+  /******  36b319c9-a423-4cb9-9b94-9158a255a853  *******/
   move(direction) {
     if (direction in this._linkedRooms) {
       return this._linkedRooms[direction];
@@ -75,7 +108,11 @@ class Item {
   describe() {
     return `You see a ${this._name} here. ${this._description}`;
   }
-
+  /**
+   * Returns the name of the item.
+   * @return {string} The name of the item.
+   */
+  /******  a43a5b6c-fd7c-40d6-a6df-f4227ba2d7fd  *******/
   get name() {
     return this._name;
   }
@@ -173,6 +210,15 @@ const Rabbit = new Character(
 );
 Garden.character = Rabbit;
 
+/**
+ * Displays information about the current room on the page.
+ *
+ * Takes a room object as its argument. This function is called whenever the
+ * player moves into a new room. It displays the room's name, description,
+ * information about any objects or characters in the room, and the room's
+ * exits.
+ */
+/******  a0ae4741-4583-416e-84ff-676020503720  *******/
 const displayRoomInfo = (room) => {
   let itemMsg = room.item
     ? room.item.describe()
@@ -196,7 +242,16 @@ const displayRoomInfo = (room) => {
     '> <input type="text" id="user-text" class="border rounded p-2 w-50" />';
   document.getElementById("user-text").focus();
 };
-
+/**
+ * Handles a keydown event from the user.
+ *
+ * If the user has finished typing their command (i.e. they press Enter),
+ * this function will parse the command and take the appropriate action.
+ * If the command is invalid, an alert will be shown to the user.
+ *
+ * @param {KeyboardEvent} event - a keydown event
+ */
+/******  c6ebe415-bab1-438f-907d-d42c9178364f  *******/
 const handleKeydown = (event) => {
   if (isGameOver) return;
 
@@ -279,6 +334,17 @@ const restartGame = () => {
   document.getElementById("game-area").classList.remove("hidden");
   document.getElementById("game-over").classList.add("hidden");
   displayRoomInfo(currentRoom); // Refresh the game display
+
+  Kitchen.item = new Item("carrot", "It's a bright orange carrot.");
+  LaundryRoom.item = new Item(
+    "carrot",
+    "Another carrot, perfect for the rabbit!"
+  );
+  Lounge.item = new Item("carrot", "This carrot looks fresh and tasty.");
+  Basement.item = new Item(
+    "golden carrot",
+    "A rare golden carrot dangles above the hole in the floor. It looks risky..."
+  );
 
   // Remove old keydown listener and reattach a new one
   document.removeEventListener("keydown", handleKeydown);
